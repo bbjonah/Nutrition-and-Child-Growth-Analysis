@@ -1,0 +1,121 @@
+import numpy as np
+import pandas as pd
+
+np.random.seed(42)
+
+n = 10000  # well-populated dataset
+
+# -------------------------
+# 1. DEMOGRAPHICS
+# -------------------------
+child_id = np.arange(1, n+1)
+age_months = np.random.randint(6, 60, n)  # 6 months to 5 years
+gender = np.random.choice(['Male', 'Female'], n)
+
+region = np.random.choice(['Urban', 'Rural', 'Semi-Urban'], n, p=[0.4, 0.4, 0.2])
+
+income_level = np.random.choice(['Low', 'Middle', 'High'], n, p=[0.5, 0.35, 0.15])
+
+mother_education = np.random.choice(['None', 'Primary', 'Secondary', 'Tertiary'],
+                                    n, p=[0.2, 0.35, 0.3, 0.15])
+
+sanitation_access = np.random.choice([0, 1], n, p=[0.35, 0.65])  # 0 = No, 1 = Yes
+
+
+# -------------------------
+# 2. NUTRITION VARIABLES
+# -------------------------
+base_calories = np.random.normal(900, 250, n)
+calorie_intake = np.clip(base_calories, 300, 1800)
+
+protein_intake = np.clip(np.random.normal(25, 10, n), 5, 60)
+
+meal_diversity_score = np.clip(np.random.normal(5, 2, n), 1, 10)
+
+breastfeeding_months = np.clip(np.random.normal(10, 4, n), 0, 24)
+
+vitamin_A = np.clip(np.random.normal(400, 150, n), 100, 900)
+
+iron_intake = np.clip(np.random.normal(8, 3, n), 2, 20)
+
+
+# -------------------------
+# 3. HEALTH VARIABLES
+# -------------------------
+diarrheal_episodes = np.random.poisson(2, n)
+immunization_status = np.random.choice([0, 1], n, p=[0.1, 0.9])
+
+
+# -------------------------
+# 4. GROWTH VARIABLES (REALISTIC RELATIONSHIP MODELED)
+# -------------------------
+
+# height influenced by nutrition + age
+height_cm = (
+    55 + (age_months * 0.5)
+    + (calorie_intake / 500)
+    + (protein_intake / 10)
+    - (diarrheal_episodes * 0.5)
+    + np.random.normal(0, 2, n)
+)
+
+# weight influenced by nutrition + health
+weight_kg = (
+    4 + (age_months * 0.2)
+    + (calorie_intake / 800)
+    + (protein_intake / 15)
+    - (diarrheal_episodes * 0.3)
+    + np.random.normal(0, 1.5, n)
+)
+
+BMI = weight_kg / ((height_cm / 100) ** 2)
+
+
+# -------------------------
+# 5. MALNUTRITION LABELS (WHO-STYLE APPROXIMATION)
+# -------------------------
+
+stunted = (height_cm < (75 + age_months * 0.3)).astype(int)
+wasted = (BMI < 14).astype(int)
+underweight = (weight_kg < (6 + age_months * 0.15)).astype(int)
+
+# overall growth status
+def classify(row):
+    if row['stunted'] == 1 or row['wasted'] == 1 or row['underweight'] == 1:
+        return "Malnourished"
+    elif row['BMI'] < 16:
+        return "At Risk"
+    else:
+        return "Healthy"
+
+df = pd.DataFrame({
+    "child_id": child_id,
+    "age_months": age_months,
+    "gender": gender,
+    "region": region,
+    "income_level": income_level,
+    "mother_education": mother_education,
+    "sanitation_access": sanitation_access,
+    "calorie_intake": calorie_intake,
+    "protein_intake": protein_intake,
+    "meal_diversity_score": meal_diversity_score,
+    "breastfeeding_months": breastfeeding_months,
+    "vitamin_A": vitamin_A,
+    "iron_intake": iron_intake,
+    "diarrheal_episodes": diarrheal_episodes,
+    "immunization_status": immunization_status,
+    "height_cm": height_cm,
+    "weight_kg": weight_kg,
+    "BMI": BMI,
+    "stunted": stunted,
+    "wasted": wasted,
+    "underweight": underweight
+})
+
+df["growth_status"] = df.apply(classify, axis=1)
+
+# Save dataset
+df.to_csv("nutrition_child_growth_synthetic.csv", index=False)
+
+print("Dataset created:", df.shape)
+df.head()
