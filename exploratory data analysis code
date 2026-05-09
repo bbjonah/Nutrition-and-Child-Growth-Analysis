@@ -1,0 +1,58 @@
+import matplotlib.pyplot as plt
+
+# -------------------------
+# Basic Info
+# -------------------------
+print(df.info())
+print(df.describe())
+
+# -------------------------
+# Malnutrition distribution
+# -------------------------
+print(df["growth_status"].value_counts())
+
+# -------------------------
+# Correlation Analysis
+# -------------------------
+numeric_cols = [
+    "age_months", "calorie_intake", "protein_intake",
+    "meal_diversity_score", "vitamin_A", "iron_intake",
+    "height_cm", "weight_kg", "BMI"
+]
+
+corr = df[numeric_cols].corr()
+print(corr)
+
+# -------------------------
+# Visualization 1: Growth Status Distribution
+# -------------------------
+df["growth_status"].value_counts().plot(kind="bar")
+plt.title("Child Growth Status Distribution")
+plt.xlabel("Status")
+plt.ylabel("Count")
+plt.show()
+
+# -------------------------
+# Visualization 2: Nutrition vs BMI
+# -------------------------
+plt.scatter(df["calorie_intake"], df["BMI"], alpha=0.3)
+plt.title("Calorie Intake vs BMI")
+plt.xlabel("Calories")
+plt.ylabel("BMI")
+plt.show()
+
+# -------------------------
+# Visualization 3: Region vs Malnutrition
+# -------------------------
+pd.crosstab(df["region"], df["growth_status"]).plot(kind="bar", stacked=True)
+plt.title("Region vs Child Nutrition Status")
+plt.show()
+
+# -------------------------
+# Visualization 4: Age vs Height
+# -------------------------
+plt.scatter(df["age_months"], df["height_cm"], alpha=0.3)
+plt.title("Age vs Height")
+plt.xlabel("Age (months)")
+plt.ylabel("Height (cm)")
+plt.show()
