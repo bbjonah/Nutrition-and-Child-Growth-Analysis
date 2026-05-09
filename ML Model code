@@ -1,0 +1,59 @@
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, accuracy_score
+
+# -------------------------
+# Encode categorical variables
+# -------------------------
+df_ml = df.copy()
+
+le_region = LabelEncoder()
+le_income = LabelEncoder()
+le_edu = LabelEncoder()
+le_gender = LabelEncoder()
+le_target = LabelEncoder()
+
+df_ml["region"] = le_region.fit_transform(df_ml["region"])
+df_ml["income_level"] = le_income.fit_transform(df_ml["income_level"])
+df_ml["mother_education"] = le_edu.fit_transform(df_ml["mother_education"])
+df_ml["gender"] = le_gender.fit_transform(df_ml["gender"])
+df_ml["growth_status"] = le_target.fit_transform(df_ml["growth_status"])
+
+# -------------------------
+# Features & Target
+# -------------------------
+X = df_ml.drop(columns=["child_id", "growth_status"])
+y = df_ml["growth_status"]
+
+# -------------------------
+# Train-Test Split
+# -------------------------
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# -------------------------
+# Model Training
+# -------------------------
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# -------------------------
+# Predictions
+# -------------------------
+y_pred = model.predict(X_test)
+
+# -------------------------
+# Evaluation
+# -------------------------
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+
+# -------------------------
+# Feature Importance
+# -------------------------
+importances = pd.Series(model.feature_importances_, index=X.columns)
+importances.sort_values().plot(kind="barh")
+plt.title("Feature Importance in Child Growth Prediction")
+plt.show()
